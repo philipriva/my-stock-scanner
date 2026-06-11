@@ -1,40 +1,18 @@
-name: Daily Stock Scanner
+.github/workflows
+	
+Create main.yml
+	
+1 hour ago
+requirements.txt
+	
+Add files via upload
+	
+1 hour ago
+scan.py
+	
+Add files via upload
+	
+1 hour ago
+Repository files navigation
 
-on:
-  schedule:
-    # 💡 這裡設定執行的時間 (國際標準時間 UTC)
-    # 夏令時間：美股 16:00 收市 + 3小時 = 美東 19:00 = UTC 23:00 (台灣/香港早上 07:00)
-    # 冬令時間：會變成台灣/香港早上 08:00 執行，剛好符合你的要求！
-    - cron: '0 23 * * *'
-  workflow_dispatch: # 允許你隨時手動點擊按鈕執行
-
-jobs:
-  run-scanner:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # 允許機器人把產出的 txt 檔寫入你的專案
-
-    steps:
-    - name: 檢查程式碼
-      uses: actions/checkout@v3
-
-    - name: 設定 Python 環境
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: 安裝必要套件
-      run: |
-        pip install -r requirements.txt
-
-    - name: 執行強勢股掃描
-      run: |
-        python scan.py
-
-    - name: 自動將結果存回 GitHub 專案
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add Strong_Stocks_V3_*.txt
-        git diff --quiet && git diff --staged --quiet || git commit -m "更新今日強勢股清單"
-        git push
+    README
