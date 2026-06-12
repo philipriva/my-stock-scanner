@@ -1,0 +1,43 @@
+name: Daily Stock Scanner
+
+on:
+  schedule:
+    # 夏令時間：台灣/香港早上 07:00 執行
+    - cron: '0 23 * * *'
+  workflow_dispatch: # 允許隨時手動點擊按鈕執行
+
+jobs:
+  run-scanner:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 顯式允許機器人寫入專案內容
+
+    steps:
+    - name: 檢查程式碼
+      uses: actions/checkout@v4
+
+    - name: 設定 Python 環境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 安裝必要套件
+      run: |
+        pip install -r requirements.txt
+
+    - name: 執行強勢股掃描
+      run: |
+        python scan.py
+
+    - name: 自動將結果存回 GitHub 專案
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        if ls Strong_Stocks_V3_*.txt 1> /dev/null 2>&1; then
+          git add Strong_Stocks_V3_*.txt
+          git commit -m "更新今日強勢股清單 (V3 高速版)"
+          git push
+        else
+          echo "今日未偵測到符合條件的強勢股，跳過上傳。"
+        fi
