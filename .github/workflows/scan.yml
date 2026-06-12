@@ -6,6 +6,10 @@ on:
     - cron: '0 23 * * *'
   workflow_dispatch: # 允許隨時手動點擊按鈕執行
 
+# 💡 新增這兩行：強制 GitHub Actions 提前採用 Node.js 24 執行環境，徹底消除警告！
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   run-scanner:
     runs-on: ubuntu-latest
