@@ -1,18 +1,18 @@
-import yfinance as yf
-import pandas as pd
 import datetime
-import requests
 import io
-import time
-import random
 import os
+import random
+import time
+import pandas as pd
+import requests
+import yfinance as yf
 
 # --- 🎯 2.0 策略參數 ---
 MIN_PRICE = 5               
 PROXIMITY_TO_HIGH = 0.10     
 ADR_MULTIPLIER = 4.5         
 MIN_DOLLAR_VOLUME = 1500000  
-RELEVANT_YEARS = 5           
+RELEVANT_YEARS = 5            
 CHUNK_SIZE = 100             # 每次打包下載 100 隻股票
 
 # 💡 保持與你的 scan.yml 一致，使用 V3 命名
@@ -41,7 +41,6 @@ def get_nasdaq_list():
         tickers = df[df['Test Issue'] == 'N']['Symbol'].astype(str).tolist()
         clean = [t for t in tickers if t.isalpha() and len(t) <= 4]
         
-        # 💡 雲端自動化每次都是全新開機，所以直接全盤掃描（2分鐘搞定，不需要 log 檔案）
         print(f"📊 總數: {len(clean)} | 準備進行群組化高速掃描...")
         return list(set(clean))
     except:
@@ -75,7 +74,6 @@ def process_batch(chunk_tickers):
                     continue
                 hist_5y = batch_data[symbol]
                 
-            # 🔥 關鍵修復：強力濾除歷史數據中包含 NaN 的無效行（防止輸出價格 nan 股票）
             hist_5y = hist_5y.dropna(subset=['Close', 'High', 'Low', 'Volume'])
             
             if len(hist_5y) < 200:
@@ -132,6 +130,21 @@ if __name__ == "__main__":
         process_batch(chunk)
         time.sleep(random.uniform(1.0, 2.0))
     
+    # --- 🧹 自動清理 5 天前的舊檔案 ---
+    print("\n🧹 開始檢查並清理過期檔案...")
+    now = time.time()
+    cutoff = now - (5 * 86400) # 5 天的總秒數
+
+    for file in os.listdir("."):
+        if file.startswith("Strong_Stocks_V3_") and file.endswith(".txt"):
+            file_path = os.path.join(".", file)
+            if os.path.getmtime(file_path) < cutoff:
+                try:
+                    os.remove(file_path)
+                    print(f"🗑️ 已自動刪除 5 天前的舊檔案: {file}")
+                except Exception as e:
+                    print(f"❌ 刪除 {file} 失敗: {e}")
+
     end_time = time.time()
     print("-" * 50)
-    print(f"🏆 掃描完成！總耗時: {(end_time - start_time)/60:.1f} 分鐘")
+    print(f"🏆 掃描與清理完成！總耗時: {(end_time - start_time)/60:.1f} 分鐘")
