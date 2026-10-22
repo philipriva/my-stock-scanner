@@ -66,7 +66,7 @@ jobs:
     # philipriva/ExtraScan with Contents: Read — required for repository_dispatch).
     # Without it, ExtraScan relies on its own crons only.
     - name: Trigger ExtraScan QQscan
-      if: always() && steps.publish.outcome == 'success' && steps.publish.outputs.file != ''
+      if: steps.publish.outputs.pushed == 'true'
       env:
         EXTRASCAN_DISPATCH_TOKEN: ${{ secrets.EXTRASCAN_DISPATCH_TOKEN }}
         STRONG_FILE: ${{ steps.publish.outputs.file }}
