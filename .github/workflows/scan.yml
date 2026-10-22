@@ -63,7 +63,7 @@ jobs:
 
     # Cross-repo: tell ExtraScan QQscan to pull newest Strong_Stocks (+ Maggie) into Sheet.
     # Requires Actions secret EXTRASCAN_DISPATCH_TOKEN on this repo (fine-grained PAT on
-    # philipriva/ExtraScan with Contents: Read — required for repository_dispatch).
+    # philipriva/ExtraScan with Contents: Read and write — write required for repository_dispatch).
     # Without it, ExtraScan relies on its own crons only.
     - name: Trigger ExtraScan QQscan
       if: steps.publish.outputs.pushed == 'true'
@@ -74,7 +74,7 @@ jobs:
       run: |
         set -euo pipefail
         if [ -z "${EXTRASCAN_DISPATCH_TOKEN:-}" ]; then
-          echo "::warning::EXTRASCAN_DISPATCH_TOKEN not set on my-stock-scanner — ExtraScan QQscan relies on its own crons only. Add a fine-grained PAT (ExtraScan Contents: Read) as that secret."
+          echo "::warning::EXTRASCAN_DISPATCH_TOKEN not set on my-stock-scanner — ExtraScan QQscan relies on its own crons only. Add a fine-grained PAT (ExtraScan Contents: Read and write) as that secret."
           exit 0
         fi
         echo "Dispatching ExtraScan QQscan (file=$STRONG_FILE pushed=$DID_PUSH)…"
