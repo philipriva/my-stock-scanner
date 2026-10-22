@@ -46,7 +46,6 @@ jobs:
           git add Strong_Stocks_V3_*.txt
           if git diff --staged --quiet; then
             echo "Strong_Stocks txt already committed; nothing new to push."
-            # Still expose newest dated file so a manual re-run can re-dispatch.
             LATEST=$(ls -1 Strong_Stocks_V3_*.txt | sort | tail -1)
             echo "file=$LATEST" >> "$GITHUB_OUTPUT"
             echo "pushed=false" >> "$GITHUB_OUTPUT"
@@ -64,7 +63,8 @@ jobs:
 
     # Cross-repo: tell ExtraScan QQscan to pull newest Strong_Stocks (+ Maggie) into Sheet.
     # Requires Actions secret EXTRASCAN_DISPATCH_TOKEN on this repo (fine-grained PAT on
-    # philipriva/ExtraScan with Actions: Read and write). Without it, ExtraScan crons only.
+    # philipriva/ExtraScan with Contents: Read — required for repository_dispatch).
+    # Without it, ExtraScan relies on its own crons only.
     - name: Trigger ExtraScan QQscan
       if: always() && steps.publish.outcome == 'success' && steps.publish.outputs.file != ''
       env:
@@ -74,21 +74,22 @@ jobs:
       run: |
         set -euo pipefail
         if [ -z "${EXTRASCAN_DISPATCH_TOKEN:-}" ]; then
-          echo "::warning::EXTRASCAN_DISPATCH_TOKEN not set on my-stock-scanner — ExtraScan QQscan relies on its own crons only. Add a fine-grained PAT (ExtraScan → Actions: Read and write) as that secret."
+          echo "::warning::EXTRASCAN_DISPATCH_TOKEN not set on my-stock-scanner — ExtraScan QQscan relies on its own crons only. Add a fine-grained PAT (ExtraScan Contents: Read) as that secret."
           exit 0
         fi
         echo "Dispatching ExtraScan QQscan (file=$STRONG_FILE pushed=$DID_PUSH)…"
-        # Prefer repository_dispatch (ExtraScan listens for strong-stocks-updated).
+        BODY=$(jq -n --arg f "$STRONG_FILE" --argjson p "${DID_PUSH:-false}" \
+          '{event_type:"strong-stocks-updated",client_payload:{file:$f,pushed:$p}}')
         HTTP=$(curl -sS -o /tmp/dispatch_body.txt -w "%{http_code}" -X POST \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${EXTRASCAN_DISPATCH_TOKEN}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           https://api.github.com/repos/philipriva/ExtraScan/dispatches \
-          -d "{\"event_type\":\"strong-stocks-updated\",\"client_payload\":{\"file\":\"${STRONG_FILE}\",\"pushed\":${DID_PUSH}}}\")
+          -d "$BODY")
         echo "repository_dispatch HTTP $HTTP"
         cat /tmp/dispatch_body.txt || true
         if [ "$HTTP" != "204" ]; then
-          echo "::error::ExtraScan repository_dispatch failed (HTTP $HTTP). Check EXTRASCAN_DISPATCH_TOKEN scopes (needs repo access to ExtraScan)."
+          echo "::error::ExtraScan repository_dispatch failed (HTTP $HTTP). Check EXTRASCAN_DISPATCH_TOKEN scopes (needs access to ExtraScan)."
           exit 1
         fi
         echo "ExtraScan QQscan dispatch accepted."
