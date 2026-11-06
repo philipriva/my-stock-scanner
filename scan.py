@@ -68,7 +68,7 @@ def get_nasdaq_list() -> list[str]:
         response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=60)
         response.raise_for_status()
         validate_nasdaq_payload(response.text)
-        df = pd.read_csv(io.StringIO(response.text), sep="|")
+        df = pd.read_csv(io.StringIO(response.text), sep="|", dtype=str, keep_default_na=False, na_values=[])  # keep real tickers NA/NAN
         tickers = df[df["Test Issue"] == "N"]["Symbol"].astype(str).tolist()
         clean = [t for t in tickers if t.isalpha() and len(t) <= 4]
         print(f"📊 總數: {len(clean)} | 準備進行群組化高速掃描...")
