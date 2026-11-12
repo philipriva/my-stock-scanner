@@ -2,38 +2,58 @@ name: Daily Stock Scanner
 
 on:
   schedule:
-    # 夏令時間：台灣/香港早上 07:00 執行
+    # Daily (keep * * *). 0 23 * * * ≈ 08:00 JST every day.
     - cron: '0 23 * * *'
+    # Backups (Philip t337u), odd minutes, finish before 11:00 JST (~15–20 min):
+    # 08:47 JST; 09:53 JST. Skip if a success already exists for the latest US session.
+    - cron: '47 23 * * *'
+    - cron: '53 0 * * *'
   workflow_dispatch: # 允許隨時手動點擊按鈕執行
 
 # 💡 新增這兩行：強制 GitHub Actions 提前採用 Node.js 24 執行環境，徹底消除警告！
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+concurrency:
+  group: daily-stock-scanner
+  cancel-in-progress: false
+
 jobs:
   run-scanner:
     runs-on: ubuntu-latest
     permissions:
       contents: write # 顯式允許機器人寫入專案內容
+      actions: read   # skip-if-session-done lists prior workflow runs
 
     steps:
     - name: 檢查程式碼
       uses: actions/checkout@v4
 
+    - name: Skip if session already succeeded
+      id: already
+      if: github.event_name == 'schedule'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python3 skip_if_session_done.py --workflow scan.yml
+
     - name: 設定 Python 環境
+      if: steps.already.outputs.skip != 'true'
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
     - name: 安裝必要套件
+      if: steps.already.outputs.skip != 'true'
       run: |
         pip install -r requirements.txt
 
     - name: 執行強勢股掃描
+      if: steps.already.outputs.skip != 'true'
       run: |
         python scan.py
 
     - name: 自動將結果存回 GitHub 專案
+      if: steps.already.outputs.skip != 'true'
       id: publish
       run: |
         git config --local user.email "action@github.com"
@@ -66,7 +86,7 @@ jobs:
     # philipriva/ExtraScan with Contents: Read and write — write required for repository_dispatch).
     # Without it, ExtraScan relies on its own crons only.
     - name: Trigger ExtraScan QQscan
-      if: steps.publish.outputs.pushed == 'true'
+      if: steps.already.outputs.skip != 'true' && steps.publish.outputs.pushed == 'true'
       env:
         EXTRASCAN_DISPATCH_TOKEN: ${{ secrets.EXTRASCAN_DISPATCH_TOKEN }}
         STRONG_FILE: ${{ steps.publish.outputs.file }}
