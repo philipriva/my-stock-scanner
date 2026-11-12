@@ -8,6 +8,8 @@ on:
     # 08:47 JST; 09:53 JST. Skip if a success already exists for the latest US session.
     - cron: '47 23 * * *'
     - cron: '53 0 * * *'
+    # Late backup 15:00 JST Tue–Sat (Yahoo last-bar often incomplete earlier).
+    - cron: "0 6 * * 2-6"
   workflow_dispatch: # 允許隨時手動點擊按鈕執行
 
 # 💡 新增這兩行：強制 GitHub Actions 提前採用 Node.js 24 執行環境，徹底消除警告！
