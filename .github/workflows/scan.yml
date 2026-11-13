@@ -2,14 +2,14 @@ name: Daily Stock Scanner
 
 on:
   schedule:
-    # Daily (keep * * *). 0 23 * * * ≈ 08:00 JST every day.
-    - cron: '0 23 * * *'
-    # Backups (Philip t337u), odd minutes, finish before 11:00 JST (~15–20 min):
-    # 08:47 JST; 09:53 JST. Skip if a success already exists for the latest US session.
-    - cron: '47 23 * * *'
+    # Daily (keep * * *). 53 0 * * * ≈ 09:53 JST every day, after us-exclude 09:13.
     - cron: '53 0 * * *'
-    # Late backup 15:00 JST Tue–Sat (Yahoo last-bar often incomplete earlier).
-    - cron: "0 6 * * 2-6"
+    # Mid backups, offset from other full-universe Yahoo writers:
+    # 13:38 JST; 16:58 JST. Skip if a success already exists for the latest US session.
+    - cron: '38 4 * * *'
+    - cron: '58 7 * * *'
+    # Late backup 18:22 JST Tue–Sat (staggered 15:00 Yahoo ladder).
+    - cron: "22 9 * * 2-6"
   workflow_dispatch: # 允許隨時手動點擊按鈕執行
 
 # 💡 新增這兩行：強制 GitHub Actions 提前採用 Node.js 24 執行環境，徹底消除警告！
