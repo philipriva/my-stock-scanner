@@ -23,6 +23,7 @@ concurrency:
 jobs:
   run-scanner:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write # 顯式允許機器人寫入專案內容
       actions: read   # skip-if-session-done lists prior workflow runs
