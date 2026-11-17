@@ -2,8 +2,10 @@ name: Daily Stock Scanner
 
 on:
   schedule:
-    # 夏令時間：台灣/香港早上 07:00 執行
-    - cron: '0 23 * * *'
+    # Midday backup only (Philip 2026-11-17 / 指原). Primary trigger is
+    # the 07:30 JST routine via workflow_dispatch. This cron is
+    # 14:23 JST daily (`23 5 * * *` UTC), odd minute, not :00/:30.
+    - cron: '23 5 * * *'
   workflow_dispatch: # 允許隨時手動點擊按鈕執行
 
 # 💡 新增這兩行：強制 GitHub Actions 提前採用 Node.js 24 執行環境，徹底消除警告！
